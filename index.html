@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kémiai kötések – kötélhúzás az elektronokért</title>
+<style>
+  :root{--bg:#fff8e7;--ink:#2b2d42;--card:#fff;
+        --egyenlo:#3aa76d;--polaris:#2f9bd1;--ionos:#e8743b;--fem:#8e6bd1;--ca:#f5a623;--cb:#5b8def}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.5 "Trebuchet MS",system-ui,sans-serif;padding:18px}
+  .wrap{max-width:1020px;margin:auto}
+  h1{text-align:center;font-size:1.7rem;margin:0 0 6px}
+  .intro{text-align:center;margin:0 0 14px}
+  .card{background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:0 4px 0 rgba(0,0,0,.1);margin-bottom:14px}
+  .slots{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+  .slot{font:inherit;background:#f4f6fb;border:4px solid transparent;border-radius:16px;padding:6px 18px;cursor:pointer;min-width:190px;text-align:center;box-shadow:none;color:var(--ink)}
+  .slot small{display:block;font-size:.8rem;color:#667;font-weight:normal}
+  .slot b{font-size:1.25rem}
+  .slot.a{border-color:var(--ca)} .slot.b{border-color:var(--cb)}
+  .slot.active{background:#fff3c4;transform:scale(1.06)}
+  .plus{font-size:1.6rem;font-weight:bold}
+  .hint{text-align:center;margin:8px 0 6px;font-weight:bold}
+  .ptwrap{overflow-x:auto;padding-bottom:6px}
+  .pt{display:grid;grid-template-columns:repeat(18,minmax(40px,1fr));gap:3px;min-width:780px}
+  .cell,.ph,.gap{height:50px;border-radius:8px}
+  .cell{border:3px solid transparent;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;padding:0;box-shadow:none}
+  .cell .s{font-weight:bold;font-size:1rem}
+  .cell .e{font-size:.62rem;opacity:.85}
+  .cell:hover{transform:scale(1.12);z-index:2;position:relative}
+  .cell.off{background:#e3e6ec!important;color:#999!important;cursor:not-allowed}
+  .cell.off:hover{transform:none}
+  .cell.selA{border-color:var(--ca);box-shadow:0 0 0 3px var(--ca)}
+  .cell.selB{border-color:var(--cb);box-shadow:0 0 0 3px var(--cb)}
+  .cell.selA.selB{box-shadow:0 0 0 3px var(--ca),0 0 0 6px var(--cb)}
+  .ph{background:#f1f1f1;color:#999;font-size:.62rem;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1}
+  .legend{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:10px;font-size:.9rem;flex-wrap:wrap}
+  .grad{width:200px;height:16px;border-radius:8px;background:linear-gradient(90deg,rgb(235,245,255),rgb(214,40,57))}
+  .trend{text-align:center;margin-top:6px;font-size:.95rem;color:#445}
+  .presets{text-align:center;margin-top:10px}
+  .presets button{font:inherit;font-size:.95rem;font-weight:bold;border:0;background:#4a90e2;color:#fff;border-radius:12px;padding:8px 14px;margin:3px;cursor:pointer;box-shadow:0 3px 0 #2c5f9e}
+  .presets button:active{transform:translateY(2px);box-shadow:0 1px 0 #2c5f9e}
+  .grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
+  canvas{width:100%;height:auto;display:block;border-radius:14px;background:#eaf6ff}
+  .mini{font-size:.88rem;color:#445;margin-top:8px;text-align:center}
+  .d1,.d2{display:inline-block;width:12px;height:12px;border-radius:50%;margin:0 4px -1px 8px;border:1.5px solid #fff;box-shadow:0 0 0 1px #aab}
+  .d1{background:#2b2d42}.d2{background:#00b8d9}
+  .badge{display:inline-block;color:#fff;font-weight:bold;border-radius:999px;padding:6px 16px;font-size:1.1rem;margin-bottom:8px}
+  #mondd{font-size:1.02rem}
+  .nums{display:flex;gap:8px;margin:10px 0}
+  .nums div{flex:1;background:#f4f6fb;border-radius:12px;padding:6px;text-align:center}
+  .nums small{display:block;font-size:.75rem;color:#667}
+  .nums b{font-size:1.3rem}
+  .box{background:#fff3c4;border-radius:20px;padding:12px 18px}
+  .box ul{margin:6px 0 0;padding-left:0;list-style:none}
+  .box li{margin:6px 0}
+  .dot{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:8px;vertical-align:-1px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🪢 Kötélhúzás az elektronokért!</h1>
+  <p class="intro">Két atom összekapcsolódik. Az <b>elektronok</b> (apró pöttyök) közéjük kerülnek. Melyik atom húzza erősebben őket? Válassz két elemet a <b>periódusos rendszerből</b>, és nézd meg!</p>
+
+  <div class="card">
+    <div class="slots">
+      <button class="slot a active" id="slotA"><small>1. atom</small><b id="slotAt">–</b></button>
+      <span class="plus">+</span>
+      <button class="slot b" id="slotB"><small>2. atom</small><b id="slotBt">–</b></button>
+    </div>
+    <div class="hint" id="hint"> Kattints egy elemre a táblázatban!</div>
+    <div class="ptwrap"><div class="pt" id="pt"></div></div>
+    <div class="legend">
+      <span>gyengén vonzza az elektronokat</span><div class="grad"></div><span>erősen vonzza az elektronokat</span>
+    </div>
+    <div class="trend"> Figyeld meg: a táblázatban <b>jobbra</b> és <b>felfelé</b> haladva egyre <b>erősebb</b> a elektronvonzóerő. A <b>fluoré (F)</b> a legerősebb, a <b>céziumé (Cs)</b> és a <b>franciumé (Fr)</b> a leggyengébbe!</div>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <canvas id="atoms" width="560" height="350"></canvas>
+      <div class="mini">
+        <span class="d1"></span>az atom saját külső elektronja (nem mozog)
+        <span class="d2"></span>közös vagy átvett elektron (úszkál)<br>
+         Cél: minden atom a <b>nemesgázok</b> teli külső héját szeretné elérni (<b>8</b> elektron, a hidrogénnél és héliumnál <b>2</b>).
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <span class="badge" id="badge">–</span>
+        <div id="mondd"></div>
+        <div class="nums">
+          <div><small>1. atom húzóereje</small><b id="enA">–</b></div>
+          <div><small>2. atom húzóereje</small><b id="enB">–</b></div>
+          <div><small>Különbség</small><b id="dEN">–</b></div>
+        </div>
+        <canvas id="bar" width="420" height="80" style="background:#fff"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="box">
+    <b>Szabály röviden:</b> minél nagyobb a különbség a két atom elektronvonzó képessége között, annál inkább vonnza az erősebb az elektronokat.
+    <ul>
+      <li><i class="dot" style="background:var(--egyenlo)"></i><b>Kis különbség</b> → az elektronok <b>közösek</b>, egyenlően osztoznak. <i>(kovalens kötés, pl. H–H, O–O)</i></li>
+      <li><i class="dot" style="background:var(--polaris)"></i><b>Közepes különbség</b> → osztoznak, de az erősebb atom <b>közelebb vonzza</b> őket. <i>(poláris kovalens kötés, pl. H–Cl, C–O)</i></li>
+      <li><i class="dot" style="background:var(--ionos)"></i><b>Nagy különbség</b> → az erősebb atom <b>vonzza</b> az elektront! Két ellentétes töltésű ion tapad össze. <i>(ionos kötés, pl. Na–Cl, Mg–O)</i></li>
+      <li><i class="dot" style="background:var(--fem)"></i><b>Két fém</b> → egyik sem ragaszkodik szorosan az elektronjaihoz, ezért az elektronok <b>szabadon úsznak</b> az egész fémben. <i>(fémes kötés, pl. Cu, Cu–Zn)</i></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+(() => {
+  // szimbólum: [név, elektronegativitás (Pauling), fém?]
+  const D = {
+    H:['Hidrogén',2.20,0],He:['Hélium',null,0],
+    Li:['Lítium',.98,1],Be:['Berillium',1.57,1],B:['Bór',2.04,0],C:['Szén',2.55,0],N:['Nitrogén',3.04,0],O:['Oxigén',3.44,0],F:['Fluor',3.98,0],Ne:['Neon',null,0],
+    Na:['Nátrium',.93,1],Mg:['Magnézium',1.31,1],Al:['Alumínium',1.61,1],Si:['Szilícium',1.90,0],P:['Foszfor',2.19,0],S:['Kén',2.58,0],Cl:['Klór',3.16,0],Ar:['Argon',null,0],
+    K:['Kálium',.82,1],Ca:['Kalcium',1.00,1],Sc:['Szkandium',1.36,1],Ti:['Titán',1.54,1],V:['Vanádium',1.63,1],Cr:['Króm',1.66,1],Mn:['Mangán',1.55,1],Fe:['Vas',1.83,1],Co:['Kobalt',1.88,1],Ni:['Nikkel',1.91,1],Cu:['Réz',1.90,1],Zn:['Cink',1.65,1],Ga:['Gallium',1.81,1],Ge:['Germánium',2.01,0],As:['Arzén',2.18,0],Se:['Szelén',2.55,0],Br:['Bróm',2.96,0],Kr:['Kripton',null,0],
+    Rb:['Rubídium',.82,1],Sr:['Stroncium',.95,1],Y:['Ittrium',1.22,1],Zr:['Cirkónium',1.33,1],Nb:['Nióbium',1.60,1],Mo:['Molibdén',2.16,1],Tc:['Technécium',1.90,1],Ru:['Ruténium',2.20,1],Rh:['Ródium',2.28,1],Pd:['Palládium',2.20,1],Ag:['Ezüst',1.93,1],Cd:['Kadmium',1.69,1],In:['Indium',1.78,1],Sn:['Ón',1.96,1],Sb:['Antimon',2.05,0],Te:['Tellúr',2.10,0],I:['Jód',2.66,0],Xe:['Xenon',null,0],
+    Cs:['Cézium',.79,1],Ba:['Bárium',.89,1],Hf:['Hafnium',1.30,1],Ta:['Tantál',1.50,1],W:['Volfrám',2.36,1],Re:['Rénium',1.90,1],Os:['Ozmium',2.20,1],Ir:['Irídium',2.20,1],Pt:['Platina',2.28,1],Au:['Arany',2.54,1],Hg:['Higany',2.00,1],Tl:['Tallium',1.62,1],Pb:['Ólom',1.87,1],Bi:['Bizmut',2.02,1],Po:['Polónium',2.00,1],At:['Asztácium',2.20,0],Rn:['Radon',null,0],
+    Fr:['Francium',.79,1],Ra:['Rádium',.90,1]
+  };
+  const ROWS = [
+    'H . . . . . . . . . . . . . . . . He',
+    'Li Be . . . . . . . . . . B C N O F Ne',
+    'Na Mg . . . . . . . . . . Al Si P S Cl Ar',
+    'K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr',
+    'Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe',
+    'Cs Ba * Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn',
+    'Fr Ra . . . . . . . . . . . . . . . .'
+  ].map(r => r.split(' '));
+
+  // p = periódus, g = csoport, val = külső (vegyérték) elektronok száma (átmenetifémeknél nem rajzoljuk: null)
+  const EL = {};
+  ROWS.forEach((row, pi) => row.forEach((sym, gi) => {
+    if (!D[sym]) return;
+    const p = pi + 1, g = gi + 1;
+    const r = sym === 'H' ? 18 : Math.min(60, 8 + 8*p + (g <= 2 ? 5 : g >= 15 ? -4 : 0));
+    const val = sym === 'He' ? 2 : (g <= 2 ? g : (g >= 13 ? g - 10 : null));
+    EL[sym] = {s: sym, n: D[sym][0], en: D[sym][1], metal: !!D[sym][2], r, p, g, val};
+  }));
+
+  const COL = {egyenlo:'#3aa76d', polaris:'#2f9bd1', ionos:'#e8743b', fem:'#8e6bd1'};
+  const NEV = {egyenlo:' Kovalens kötés', polaris:' Poláris kovalens kötés', ionos:' Ionos kötés', fem:' Fémes kötés'};
+  const CA = '#f5a623', CB = '#5b8def', CA_T = '#b86e00', CB_T = '#2c5fb0';
+  const NG = ['', 'He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn'];   // nemesgáz az adott periódusban
+  const f2 = v => v.toFixed(2).replace('.', ',');
+  const sub = n => n === 1 ? '' : String(n).replace(/\d/g, c => '₀₁₂₃₄₅₆₇₈₉'[c]);
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  const target = e => e.p === 1 ? 2 : 8;                  // 2 (H, He) vagy 8 külső elektron
+  const ngOK = e => e.g <= 2 || e.p <= 3;                 // egyszerű nemesgáz-szerkezet
+
+  let A = EL.Na, B = EL.Cl, active = 'A', info = {};
+
+  // ---------- Periódusos rendszer ----------
+  const EN_MIN = .75, EN_MAX = 3.98;
+  function enColor(en){
+    const t = Math.max(0, Math.min(1, (en - EN_MIN)/(EN_MAX - EN_MIN)));
+    const c1 = [235,245,255], c2 = [214,40,57];
+    return {bg:`rgb(${c1.map((v,k)=>Math.round(v+(c2[k]-v)*t)).join(',')})`, fg: t > .5 ? '#fff' : '#2b2d42'};
+  }
+  const pt = document.getElementById('pt'), cells = {};
+  ROWS.forEach(row => row.forEach(sym => {
+    if (sym === '.'){ const g = document.createElement('div'); g.className = 'gap'; pt.appendChild(g); return; }
+    if (sym === '*'){ const g = document.createElement('div'); g.className = 'ph'; g.innerHTML = 'La–<br>Lu'; g.title = 'lantanoidák (itt nem szerepelnek)'; pt.appendChild(g); return; }
+    const e = EL[sym], b = document.createElement('button'); b.className = 'cell';
+    if (e.en == null){
+      b.classList.add('off'); b.innerHTML = `<span class="s">${sym}</span><span class="e">–</span>`;
+      b.title = `${e.n}: nemesgáz, szinte sosem alakít ki kötést másokkal`;
+    } else {
+      const c = enColor(e.en); b.style.background = c.bg; b.style.color = c.fg;
+      b.innerHTML = `<span class="s">${sym}</span><span class="e">${f2(e.en)}</span>`;
+      b.title = `${e.n} – vonzóerő: ${f2(e.en)}` + (e.val != null ? `, külső elektronok: ${e.val}` : '');
+      b.onclick = () => {
+        if (active === 'A'){ A = e; active = 'B'; } else { B = e; active = 'A'; }
+        update();
+      };
+    }
+    cells[sym] = b; pt.appendChild(b);
+  }));
+  document.getElementById('slotA').onclick = () => { active = 'A'; update(); };
+  document.getElementById('slotB').onclick = () => { active = 'B'; update(); };
+
+  const PRE = [['H','H'],['O','O'],['H','Cl'],['C','O'],['Na','Cl'],['Mg','O'],['Mg','Cl'],['Cu','Cu'],['Cu','Zn']];
+  const pe = document.getElementById('presets');
+  pe.appendChild(Object.assign(document.createElement('div'), {textContent:'Vagy próbálj ki egy kész párost:', style:'font-size:.9rem;color:#667;margin-bottom:2px'}));
+  for (const [a,b] of PRE){
+    const x = document.createElement('button'); x.textContent = `${a} + ${b}`;
+    x.onclick = () => { A = EL[a]; B = EL[b]; active = 'A'; update(); }; pe.appendChild(x);
+  }
+
+  // ---------- Rajzolás ----------
+  function setup(id){
+    const c = document.getElementById(id), r = window.devicePixelRatio || 1, w = c.width, h = c.height;
+    c.width = w*r; c.height = h*r; const ctx = c.getContext('2d'); ctx.scale(r, r); return {ctx, w, h};
+  }
+  const AT = setup('atoms'), BAR = setup('bar');
+  const smooth = v => { v = Math.max(0, Math.min(1, v)); return v*v*(3-2*v); };
+  const lerp = (a,b,t) => a + (b-a)*t;
+
+  function classify(a, b){
+    const d = Math.abs(a.en - b.en); let type;
+    if (d >= 1.7) type = 'ionos';
+    else if (a.metal && b.metal) type = 'fem';
+    else if (d < 0.4) type = 'egyenlo';
+    else type = 'polaris';
+    return {d, type};
+  }
+
+  // ---- Vegyértékelektronok (nemesgáz-szerkezet) ----
+  // Visszaadja, hány "saját" (nem mozgó) és hány mozgó elektront rajzolunk. null = nem alkalmazható.
+  function octetInfo(){
+    if (info.type === 'fem' || A.val == null || B.val == null) return null;
+    const hi = A.en >= B.en ? A : B, lo = hi === A ? B : A;
+    if (info.type === 'ionos'){
+      const need = target(hi) - hi.val;               // ennyit vesz fel a vonzóbb atom
+      const nT = Math.min(lo.val, need);              // ennyi elektron költözik át
+      if (nT < 1) return null;
+      return {mode:'ion', hi, lo, nT, need, restLo: lo.val - nT, hiMissing: need - nT};
+    }
+    return {mode:'cov', sA: Math.max(0, A.val - 1), sB: Math.max(0, B.val - 1)};  // mindkét atom 1-1 elektronja közös
+  }
+
+  // pontok az atom körül: előbb elektronpárok (kívül, fent, lent), a kötés felőli oldal utoljára
+  function spots(cx, cy, r, inAng, n){
+    const sides = [inAng + Math.PI, -Math.PI/2, Math.PI/2, inAng], out = [];
+    for (let k = 0; k < n && k < 8; k++){
+      const th = sides[Math.floor(k/2)], off = (k % 2 ? 1 : -1)*6, R = r + 9;
+      out.push([cx + R*Math.cos(th) - off*Math.sin(th), cy + R*Math.sin(th) + off*Math.cos(th)]);
+    }
+    return out;
+  }
+
+  function capFor(side, oc){
+    const e = side === 'A' ? A : B, tg = target(e);
+    if (oc.mode === 'cov'){
+      const c = (side === 'A' ? oc.sA : oc.sB) + 2;
+      return `${e.s}: külső héj ${c}` + (c === tg ? ` ✔ ${NG[e.p]}-szerű` : '');
+    }
+    if (e === oc.hi){
+      const c = e.val + oc.nT;
+      return `${e.s}: külső héj ${c}` + (c === tg ? ` ✔ ${NG[e.p]}-szerű` : ` – még ${tg - c} kellene`);
+    }
+    if (oc.restLo > 0) return `${e.s}: még ${oc.restLo} elektront adna`;
+    return ngOK(e) ? `${e.s}: külső héj ${e.p === 2 ? 2 : 8} ✔ ${NG[e.p - 1]}-szerű` : `${e.s}: leadja a külső elektronokat`;
+  }
+
+  function octetNote(){
+    const oc = octetInfo(); if (!oc) return '';
+    if (oc.mode === 'ion'){
+      const {hi, lo, nT, need} = oc;
+      const g = gcd(lo.val, need), loC = need/g, hiC = lo.val/g;
+      let s = `<br><br> <b>${hi.s}</b>: ${hi.val} + ${nT} = ${hi.val + nT} külső elektron`;
+      s += hi.val + nT === target(hi) ? ` → kész a teli héj (${NG[hi.p]}-szerű)! ` : ` (még ${need - nT} kellene). `;
+      s += oc.restLo === 0
+        ? `<b>${lo.s}</b>: ${lo.val} − ${nT} = 0 külső elektron, így a teli belső héj marad` + (ngOK(lo) ? ` (${NG[lo.p - 1]}-szerű).` : '.')
+        : `<b>${lo.s}</b> még ${oc.restLo} elektront adna.`;
+      if (loC !== 1 || hiC !== 1)
+        s += `<br>🧪 Ezért ${loC} ${lo.s} és ${hiC} ${hi.s} illik össze: <b>${lo.s}${sub(loC)}${hi.s}${sub(hiC)}</b>.`;
+      return s;
+    }
+    const cA = oc.sA + 2, cB = oc.sB + 2, okA = cA === target(A), okB = cB === target(B);
+    const line = (e, s, c, ok) => `<b>${e.s}</b>: ${s} saját + 2 közös = ${c}` + (ok ? ` ✔ (${NG[e.p]}-szerű)` : '');
+    let s = '<br><br> ' + (A.s === B.s ? line(A, oc.sA, cA, okA) + ' – mindkét atomnál.' : line(A, oc.sA, cA, okA) + '; ' + line(B, oc.sB, cB, okB) + '.');
+    if (!(okA && okB)) s += '<br> Itt még nem teli mindkét atom külső héja, ezért az atomok több elektronpárt is megosztanak (kettős vagy hármas kötés), vagy más atomokhoz is kapcsolódnak (pl. H₂O, CO₂).';
+    return s;
+  }
+
+  function mondd(){ return mondBase() + octetNote(); }
+  function mondBase(){
+    const hi = A.en >= B.en ? A : B, lo = A.en >= B.en ? B : A, d = f2(info.d);
+    if (A.s === B.s && info.type !== 'fem') return `Két egyforma atom! Mindkettő <b>pontosan egyformán</b> húzza az elektronokat (a különbség ${d}), ezért <b>egyenlően osztoznak</b> rajtuk – az elektronok pont középen vannak.`;
+    switch(info.type){
+      case 'egyenlo': return `Mindkét atom <b>majdnem egyformán erősen</b> húzza az elektronokat (a különbség csak ${d}). Ezért <b>egyenlően osztoznak</b> rajtuk – az elektronok pont középen vannak.`;
+      case 'polaris': return `A(z) <b>${hi.n}</b> erősebben húz, mint a(z) <b>${lo.n}</b> (a különbség ${d}). Az elektronok osztoznak, de <b>közelebb kerülnek a(z) ${hi.s} atomhoz</b>. Ott egy kicsit negatív (δ−) lesz, a másik oldal kicsit pozitív (δ+).`;
+      case 'ionos': return `A(z) <b>${hi.n}</b> sokkal nagyobb az elektronegativitása (a különbség ${d}), ezért <b>elviszi az elektront</b> a(z) ${lo.n} atomtól! A(z) ${lo.s} pozitív, a(z) ${hi.s} negatív ion lesz, és a plusz meg a mínusz összetapad, mint a mágnesek.`;
+      case 'fem': return `Mindkét atom <b>fém</b>, és egyik sem ragaszkodik az elektronjaihoz. Az elektronok elhagyják az atomokat, és <b>szabadon úsznak</b> köztük, ez tartja össze a fémet!`;
+    }
+  }
+
+  function drawAtoms(t){
+    const {ctx, w, h} = AT;
+    ctx.clearRect(0, 0, w, h); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (info.type === 'fem') drawMetal(t); else drawPair(t);
+    drawRope();
+  }
+
+  function drawPair(t){
+    const {ctx, w} = AT;
+    const hiIsA = A.en >= B.en, hi = hiIsA ? A : B, lo = hiIsA ? B : A;
+    const ionic = smooth((info.d - 0.4) / 1.3);
+    const rHi = hi.r*1.05*(1 + 0.22*ionic), rLo = lo.r*1.05*(1 - 0.38*ionic);
+    const overlap = (0.5*(1-ionic) - 0.04*ionic) * Math.min(rHi, rLo);
+    const dist = rHi + rLo - overlap, cy = 135;
+    const ax = w/2 - dist/2, bx = w/2 + dist/2;
+    const ar = hiIsA ? rHi : rLo, br = hiIsA ? rLo : rHi;
+
+    const atom = (x, r, c, lab) => {
+      const g = ctx.createRadialGradient(x - r*.3, cy - r*.3, r*.1, x, cy, r);
+      g.addColorStop(0, c + 'ee'); g.addColorStop(1, c + '88');
+      ctx.beginPath(); ctx.arc(x, cy, r, 0, 7); ctx.fillStyle = g; ctx.fill();
+      ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.stroke();
+      ctx.fillStyle = '#2b2d42'; ctx.font = 'bold 22px system-ui'; ctx.fillText(lab, x, cy);
+    };
+    atom(ax, ar, CA, A.s); atom(bx, br, CB, B.s);
+
+    const hiX = hiIsA ? ax : bx, loX = hiIsA ? bx : ax, mid = (ax + bx)/2;
+    const hiR = hiIsA ? ar : br, loR = hiIsA ? br : ar, hiIn = hiIsA ? 0 : Math.PI;
+    const oc = octetInfo(), ionMode = oc && oc.mode === 'ion';
+    const dot = (x, y, col) => { ctx.beginPath(); ctx.arc(x, y, 4.3, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); };
+
+    // --- közös / úszkáló elektronok (kovalens kötés vagy ha nincs vegyérték-adat) ---
+    if (!ionMode){
+      const sh = Math.min(1, info.d / 1.7);
+      const cx = ionic >= 0.999 ? hiX : lerp(mid, hiX, 0.85*sh);
+      const wx = lerp(Math.max(6, overlap)*0.55 + 10, hiR*0.62, ionic), wy = lerp(Math.min(ar, br)*0.55, hiR*0.62, ionic);
+      const cg = ctx.createRadialGradient(cx, cy, 2, cx, cy, Math.max(wx, wy)*1.5 + 8);
+      cg.addColorStop(0, 'rgba(0,184,217,.45)'); cg.addColorStop(1, 'rgba(0,184,217,0)');
+      ctx.fillStyle = cg; ctx.beginPath(); ctx.ellipse(cx, cy, wx*1.6 + 8, wy*1.5 + 8, 0, 0, 7); ctx.fill();
+      for (let k = 0; k < 2; k++){          // <<< a két úszkáló (közös) elektron
+        const ph = k*Math.PI + (k ? .5 : 0);
+        dot(cx + wx*Math.cos(t/420*(1 + k*.17) + ph), cy + wy*Math.sin(t/330*(1 + k*.13) + ph), '#00b8d9');
+      }
+    }
+
+    // --- saját (nem mozgó) vegyértékelektronok ---
+    if (oc){
+      const stA = oc.mode === 'cov' ? oc.sA : (hiIsA ? hi.val : oc.restLo);
+      const stB = oc.mode === 'cov' ? oc.sB : (hiIsA ? oc.restLo : hi.val);
+      spots(ax, cy, ar, 0, stA).forEach(p => dot(p[0], p[1], '#2b2d42'));
+      spots(bx, cy, br, Math.PI, stB).forEach(p => dot(p[0], p[1], '#2b2d42'));
+      if (ionMode){                           // az átköltözött elektron(ok) a vonzóbb atom üres helyeire ülnek
+        spots(hiX, cy, hiR, hiIn, hi.val + oc.nT).slice(hi.val).forEach((p, k) =>
+          dot(p[0] + Math.sin(t/180 + k*2)*1.6, p[1] + Math.cos(t/210 + k)*1.6, '#00b8d9'));
+      }
+      // felirat: hány külső elektronja van?
+      ctx.font = 'bold 13px system-ui'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = CA_T; ctx.textAlign = 'right'; ctx.fillText(capFor('A', oc), w/2 - 8, 226);
+      ctx.fillStyle = CB_T; ctx.textAlign = 'left'; ctx.fillText(capFor('B', oc), w/2 + 8, 226);
+      ctx.textAlign = 'center';
+    }
+
+    // --- töltések ---
+    const lab = (x, r, txt, c) => { ctx.fillStyle = c; ctx.font = 'bold 26px system-ui'; ctx.fillText(txt, x, cy - r - 36); };
+    const nC = ionMode && oc.nT > 1 ? oc.nT : '';
+    ctx.font = '15px system-ui'; ctx.fillStyle = '#556';
+    if (info.type === 'ionos'){
+      lab(hiX, hiR, nC + '−', COL.ionos); lab(loX, loR, nC + '+', COL.ionos);
+      ctx.fillStyle = '#556'; ctx.font = '15px system-ui';
+      ctx.fillText(nC ? 'az elektronok átköltöztek' : 'az elektron átköltözött', w/2, 252);
+    } else if (info.type === 'polaris'){
+      lab(hiX, hiR, 'δ−', COL.polaris); lab(loX, loR, 'δ+', COL.polaris);
+      ctx.fillText('a közös elektronok közelebb vannak a(z) ' + hi.s + ' atomhoz', w/2, 252);
+    } else ctx.fillText('a közös elektronok pont középen vannak', w/2, 252);
+  }
+
+  const swim = Array.from({length: 60}, () => ({x: 90 + Math.random()*380, y: 30 + Math.random()*190, vx: Math.random()-.5, vy: Math.random()-.5}));
+  function drawMetal(t){
+    const {ctx, w} = AT;
+    const cols = 5, rows = 3, gap = 78, x0 = w/2 - (cols-1)*gap/2, y0 = 62, same = A.s === B.s;
+    const bx = x0 - 46, by = y0 - 46, bw = (cols-1)*gap + 92, bh = (rows-1)*gap + 92;
+    ctx.fillStyle = 'rgba(0,184,217,.2)'; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 22); ctx.fill();
+    for (const e of swim){
+      e.vx += (Math.random()-.5)*.3; e.vy += (Math.random()-.5)*.3;
+      const sp = Math.hypot(e.vx, e.vy); if (sp > 1.6){ e.vx *= 1.6/sp; e.vy *= 1.6/sp; }
+      e.x += e.vx; e.y += e.vy;
+      if (e.x < bx + 8){ e.x = bx + 8; e.vx *= -1; } if (e.x > bx + bw - 8){ e.x = bx + bw - 8; e.vx *= -1; }
+      if (e.y < by + 8){ e.y = by + 8; e.vy *= -1; } if (e.y > by + bh - 8){ e.y = by + bh - 8; e.vy *= -1; }
+      ctx.beginPath(); ctx.arc(e.x, e.y, 3.6, 0, 7); ctx.fillStyle = '#00b8d9'; ctx.fill();
+    }
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++){
+      const el = ((i + j) % 2 === 0 || same) ? A : B, c = el === A ? CA : CB;
+      const r = Math.max(17, Math.min(26, el.r*0.55)), x = x0 + i*gap, y = y0 + j*gap;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = c + 'cc'; ctx.fill(); ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.stroke();
+      ctx.fillStyle = '#2b2d42'; ctx.font = 'bold 14px system-ui'; ctx.fillText(el.s + '⁺', x, y);
+    }
+    ctx.fillStyle = '#556'; ctx.font = '15px system-ui'; ctx.fillText('a pozitív fématomok között szabadon úsznak az elektronok', w/2, 236);
+  }
+
+  // kötélhúzás: nyilak hossza ~ húzóerő
+  function drawRope(){
+    const {ctx, w} = AT, y = 306;
+    ctx.fillStyle = '#2b2d42'; ctx.font = 'bold 15px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Elektronegativitás: melyik vonzza jobban az elektront?', w/2, 280);
+    const arrow = (x, dir, len, c) => {
+      ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dir*len, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + dir*(len + 8), y); ctx.lineTo(x + dir*(len - 8), y - 11); ctx.lineTo(x + dir*(len - 8), y + 11); ctx.closePath(); ctx.fill();
+    };
+    const la = A.en*30, lb = B.en*30;
+    arrow(w/2 - 4, -1, la, CA); arrow(w/2 + 4, 1, lb, CB);
+    ctx.fillStyle = '#2b2d42'; ctx.font = 'bold 15px system-ui';
+    ctx.fillText(A.s, w/2 - 4 - la - 22, y); ctx.fillText(B.s, w/2 + 4 + lb + 22, y);
+    ctx.fillStyle = '#556'; ctx.font = '13px system-ui';
+    ctx.fillText('hosszabb nyíl = nagyobb elektronegativitáskülönbség', w/2, 337);
+  }
+
+  function drawBar(){
+    const {ctx, w, h} = BAR; ctx.clearRect(0, 0, w, h);
+    const L = 12, W = w - 24, y = 30, bh = 22, max = 3.4, X = v => L + v/max*W;
+    const seg = [[0, 0.4, COL.egyenlo, 'kicsi'], [0.4, 1.7, COL.polaris, 'közepes'], [1.7, max, COL.ionos, 'nagy']];
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const [a, b, c, t] of seg){
+      ctx.fillStyle = c; ctx.fillRect(X(a), y, X(b) - X(a), bh);
+      if (X(b) - X(a) > 50){ ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui'; ctx.fillText(t, (X(a) + X(b))/2, y + bh/2); }
+    }
+    ctx.fillStyle = '#556'; ctx.font = '12px system-ui'; ctx.fillText('különbség az elektronegativitások között', w/2, y + bh + 18);
+    const px = X(Math.min(info.d, max));
+    ctx.fillStyle = '#2b2d42'; ctx.beginPath(); ctx.moveTo(px, y - 1); ctx.lineTo(px - 8, y - 16); ctx.lineTo(px + 8, y - 16); ctx.closePath(); ctx.fill();
+  }
+
+  function update(){
+    info = classify(A, B);
+    document.getElementById('enA').textContent = f2(A.en);
+    document.getElementById('enB').textContent = f2(B.en);
+    document.getElementById('dEN').textContent = f2(info.d);
+    const bd = document.getElementById('badge'); bd.textContent = NEV[info.type]; bd.style.background = COL[info.type];
+    document.getElementById('mondd').innerHTML = mondd();
+    for (const s in cells) cells[s].classList.remove('selA', 'selB');
+    cells[A.s].classList.add('selA'); cells[B.s].classList.add('selB');
+    document.getElementById('slotAt').textContent = `${A.s} – ${A.n}`;
+    document.getElementById('slotBt').textContent = `${B.s} – ${B.n}`;
+    document.getElementById('slotA').classList.toggle('active', active === 'A');
+    document.getElementById('slotB').classList.toggle('active', active === 'B');
+    document.getElementById('hint').textContent = active === 'A' ? ' Kattints egy elemre: ez lesz az 1. atom!' : ' Most válaszd ki a 2. atomot!';
+    drawBar();
+  }
+  update();
+  (function frame(t){ drawAtoms(t); requestAnimationFrame(frame); })(0);
+})();
+</script>
+</body>
+</html>
